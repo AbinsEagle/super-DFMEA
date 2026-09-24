@@ -36,7 +36,13 @@ export const useDFMEAStore = create(
       setHasHydrated: (value) => set({ hasHydrated: value }),
 
       setActiveModule: (moduleId) => {
-        set({ activeModuleId: moduleId, selectedNodeId: null, selectedEdgeId: null })
+        set({
+          activeModuleId: moduleId,
+          selectedNodeId: null,
+          selectedEdgeId: null,
+          filterCategories: [],
+          filterInterfaceTypes: [],
+        })
       },
       addModule: (name) => {
         const trimmed = name.trim()
@@ -72,6 +78,28 @@ export const useDFMEAStore = create(
       openPresetDirectory: () => set({ isPresetDirectoryOpen: true }),
       closePresetDirectory: () => set({ isPresetDirectoryOpen: false }),
 
+      // --- Filters (part category / interface type). Empty array = no
+      // restriction, i.e. everything shown at full opacity. ---
+      filterCategories: [],
+      filterInterfaceTypes: [],
+      toggleCategoryFilter: (category) => {
+        const current = get().filterCategories
+        set({
+          filterCategories: current.includes(category)
+            ? current.filter((c) => c !== category)
+            : [...current, category],
+        })
+      },
+      toggleInterfaceTypeFilter: (interfaceType) => {
+        const current = get().filterInterfaceTypes
+        set({
+          filterInterfaceTypes: current.includes(interfaceType)
+            ? current.filter((t) => t !== interfaceType)
+            : [...current, interfaceType],
+        })
+      },
+      clearFilters: () => set({ filterCategories: [], filterInterfaceTypes: [] }),
+
       // --- React Flow wiring ---
       onNodesChange: (changes) => {
         get()._updateActiveGraph((g) => ({ nodes: applyNodeChanges(changes, g.nodes) }))
@@ -96,12 +124,21 @@ export const useDFMEAStore = create(
       // --- Parts (nodes) CRUD ---
       addPart: (overrides = {}, position) => {
         const id = genId('part')
+        const { nodes: existingNodes } = get()._activeGraph()
+        // Lay new parts out on a loose grid (with a little jitter) instead
+        // of pure random placement, which reliably overlapped since the
+        // random range was smaller than the part card's own width.
+        const index = existingNodes.length
+        const columns = 4
+        const cellWidth = 260
+        const cellHeight = 200
+        const jitter = () => (Math.random() - 0.5) * 30
         const newNode = {
           id,
           type: 'partNode',
           position: position ?? {
-            x: 120 + Math.random() * 300,
-            y: 120 + Math.random() * 300,
+            x: 80 + (index % columns) * cellWidth + jitter(),
+            y: 80 + Math.floor(index / columns) * cellHeight + jitter(),
           },
           data: {
             name: 'New Part',

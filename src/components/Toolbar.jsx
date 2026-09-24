@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 import { useDFMEAStore } from '../store/dfmeaStore'
+import FilterPanel from './FilterPanel'
 
-export default function FloatingActionButtons() {
+export default function Toolbar() {
   const openPresetDirectory = useDFMEAStore((s) => s.openPresetDirectory)
   const exportGraph = useDFMEAStore((s) => s.exportGraph)
 
@@ -25,24 +26,23 @@ export default function FloatingActionButtons() {
   }, [exportGraph])
 
   return (
-    <div className="fab-container">
+    <div className="toolbar">
+      <FilterPanel />
       <button
         type="button"
-        className="fab-button fab-secondary"
+        className="btn btn-secondary toolbar-btn"
         onClick={handleExport}
         title="Export graph as JSON"
       >
-        <span className="fab-icon">⬇</span>
         Export JSON
       </button>
       <button
         type="button"
-        className="fab-button fab-primary"
+        className="btn btn-primary toolbar-btn"
         onClick={handleAddPart}
         title="Add a new part"
       >
-        <span className="fab-icon">+</span>
-        Add Part
+        + Add Part
       </button>
     </div>
   )
