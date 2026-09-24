@@ -2,7 +2,7 @@ import { ReactFlowProvider } from 'reactflow'
 import { useDFMEAStore } from './store/dfmeaStore'
 import ModuleSelector from './components/ModuleSelector'
 import GraphCanvas from './components/GraphCanvas'
-import FloatingActionButtons from './components/FloatingActionButtons'
+import Toolbar from './components/Toolbar'
 import PartPropertyModal from './components/PartPropertyModal'
 import InterfacePropertyModal from './components/InterfacePropertyModal'
 import PresetPartDirectory from './components/PresetPartDirectory'
@@ -40,18 +40,20 @@ export default function App() {
           >
             ← Modules
           </button>
-          <h1>{activeModuleName}</h1>
+          <div className="app-header-title-group">
+            <h1>{activeModuleName}</h1>
+            <span className="save-status">
+              {partCount} parts · {interfaceCount} interfaces · auto-saved
+            </span>
+          </div>
         </div>
-        <span className="save-status">
-          {partCount} parts · {interfaceCount} interfaces · auto-saved
-        </span>
+        <Toolbar />
       </div>
 
       <ReactFlowProvider>
         <div className="canvas-wrapper">
           <GraphCanvas />
         </div>
-        <FloatingActionButtons />
         <PartPropertyModal />
         <InterfacePropertyModal />
         <PresetPartDirectory />

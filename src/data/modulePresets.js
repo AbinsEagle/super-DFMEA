@@ -33,6 +33,21 @@ export const INTERFACE_TYPES = [
   'Other',
 ]
 
+// One distinct color per interface type — used to color-code edges on the
+// canvas and as the legend/checkbox swatch in the filter panel.
+export const INTERFACE_TYPE_COLORS = {
+  Electrical: '#f59e0b',
+  Thermal: '#ef4444',
+  Mechanical: '#64748b',
+  Fluid: '#3b82f6',
+  'Data/Signal': '#8b5cf6',
+  Other: '#94a3b8',
+}
+
+export function getInterfaceTypeColor(interfaceType) {
+  return INTERFACE_TYPE_COLORS[interfaceType] ?? INTERFACE_TYPE_COLORS.Other
+}
+
 // Per-module: the category list shown in the part-edit dropdown, and the
 // preset parts offered in the "Add Part" directory.
 export const MODULE_PART_CATEGORIES = {
