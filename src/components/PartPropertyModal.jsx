@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
-import { useDFMEAStore, PART_CATEGORIES } from '../store/dfmeaStore'
+import { useDFMEAStore } from '../store/dfmeaStore'
+import { getModuleCategories } from '../data/modulePresets'
 
 export default function PartPropertyModal() {
   const selectedNodeId = useDFMEAStore((s) => s.selectedNodeId)
-  const nodes = useDFMEAStore((s) => s.nodes)
+  const activeModuleId = useDFMEAStore((s) => s.activeModuleId)
+  const nodes = useDFMEAStore((s) => s.graphsByModule[s.activeModuleId]?.nodes ?? [])
   const updatePart = useDFMEAStore((s) => s.updatePart)
   const deletePart = useDFMEAStore((s) => s.deletePart)
   const clearSelection = useDFMEAStore((s) => s.clearSelection)
 
   const node = nodes.find((n) => n.id === selectedNodeId)
+  const categories = getModuleCategories(activeModuleId)
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState('Other')
@@ -56,7 +59,7 @@ export default function PartPropertyModal() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
-            {PART_CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
