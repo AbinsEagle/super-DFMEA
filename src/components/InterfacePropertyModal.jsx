@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useDFMEAStore, INTERFACE_TYPES } from '../store/dfmeaStore'
+import { useDFMEAStore } from '../store/dfmeaStore'
+import { INTERFACE_TYPES } from '../data/modulePresets'
 
 export default function InterfacePropertyModal() {
   const selectedEdgeId = useDFMEAStore((s) => s.selectedEdgeId)
-  const edges = useDFMEAStore((s) => s.edges)
-  const nodes = useDFMEAStore((s) => s.nodes)
+  const edges = useDFMEAStore((s) => s.graphsByModule[s.activeModuleId]?.edges ?? [])
+  const nodes = useDFMEAStore((s) => s.graphsByModule[s.activeModuleId]?.nodes ?? [])
   const updateInterface = useDFMEAStore((s) => s.updateInterface)
   const deleteInterface = useDFMEAStore((s) => s.deleteInterface)
   const clearSelection = useDFMEAStore((s) => s.clearSelection)

@@ -2,12 +2,12 @@ import { useCallback } from 'react'
 import { useDFMEAStore } from '../store/dfmeaStore'
 
 export default function FloatingActionButtons() {
-  const addPart = useDFMEAStore((s) => s.addPart)
+  const openPresetDirectory = useDFMEAStore((s) => s.openPresetDirectory)
   const exportGraph = useDFMEAStore((s) => s.exportGraph)
 
   const handleAddPart = useCallback(() => {
-    addPart()
-  }, [addPart])
+    openPresetDirectory()
+  }, [openPresetDirectory])
 
   const handleExport = useCallback(() => {
     const graph = exportGraph()

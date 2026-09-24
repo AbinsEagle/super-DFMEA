@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval'
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow'
+import { DEFAULT_MODULES } from '../data/modulePresets'
 
 // Adapts idb-keyval's get/set/del to the { getItem, setItem, removeItem }
 // shape zustand's persist middleware expects, so state survives refresh
@@ -12,53 +13,71 @@ const indexedDBStorage = {
   removeItem: async (name) => idbDel(name),
 }
 
-export const PART_CATEGORIES = [
-  'Heating Element',
-  'Tank',
-  'Sensor',
-  'Controller',
-  'Wiring',
-  'Enclosure',
-  'Valve',
-  'Other',
-]
-
-export const INTERFACE_TYPES = [
-  'Electrical',
-  'Thermal',
-  'Mechanical',
-  'Fluid',
-  'Data/Signal',
-  'Other',
-]
-
 let idCounter = 0
 const genId = (prefix) => {
   idCounter += 1
   return `${prefix}_${Date.now()}_${idCounter}`
 }
 
-const initialNodes = []
-const initialEdges = []
+const slugify = (name) =>
+  `${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${genId('mod')}`
+
+const emptyGraph = () => ({ nodes: [], edges: [] })
 
 export const useDFMEAStore = create(
   persist(
     (set, get) => ({
-      nodes: initialNodes,
-      edges: initialEdges,
-
-      selectedNodeId: null,
-      selectedEdgeId: null,
+      // --- Modules ---
+      modules: DEFAULT_MODULES,
+      activeModuleId: null,
+      graphsByModule: Object.fromEntries(DEFAULT_MODULES.map((m) => [m.id, emptyGraph()])),
 
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
 
+      setActiveModule: (moduleId) => {
+        set({ activeModuleId: moduleId, selectedNodeId: null, selectedEdgeId: null })
+      },
+      addModule: (name) => {
+        const trimmed = name.trim()
+        if (!trimmed) return null
+        const id = slugify(trimmed)
+        set({
+          modules: [...get().modules, { id, name: trimmed }],
+          graphsByModule: { ...get().graphsByModule, [id]: emptyGraph() },
+        })
+        return id
+      },
+
+      // --- Internal helper: scoped read/write of the active module's graph ---
+      _activeGraph: () => {
+        const { activeModuleId, graphsByModule } = get()
+        return graphsByModule[activeModuleId] ?? emptyGraph()
+      },
+      _updateActiveGraph: (updater) => {
+        const { activeModuleId, graphsByModule } = get()
+        if (!activeModuleId) return
+        const current = graphsByModule[activeModuleId] ?? emptyGraph()
+        set({
+          graphsByModule: {
+            ...graphsByModule,
+            [activeModuleId]: { ...current, ...updater(current) },
+          },
+        })
+      },
+
+      selectedNodeId: null,
+      selectedEdgeId: null,
+      isPresetDirectoryOpen: false,
+      openPresetDirectory: () => set({ isPresetDirectoryOpen: true }),
+      closePresetDirectory: () => set({ isPresetDirectoryOpen: false }),
+
       // --- React Flow wiring ---
       onNodesChange: (changes) => {
-        set({ nodes: applyNodeChanges(changes, get().nodes) })
+        get()._updateActiveGraph((g) => ({ nodes: applyNodeChanges(changes, g.nodes) }))
       },
       onEdgesChange: (changes) => {
-        set({ edges: applyEdgeChanges(changes, get().edges) })
+        get()._updateActiveGraph((g) => ({ edges: applyEdgeChanges(changes, g.edges) }))
       },
       onConnect: (connection) => {
         const newEdge = {
@@ -71,11 +90,11 @@ export const useDFMEAStore = create(
             description: '',
           },
         }
-        set({ edges: addEdge(newEdge, get().edges) })
+        get()._updateActiveGraph((g) => ({ edges: addEdge(newEdge, g.edges) }))
       },
 
       // --- Parts (nodes) CRUD ---
-      addPart: (position) => {
+      addPart: (overrides = {}, position) => {
         const id = genId('part')
         const newNode = {
           id,
@@ -88,45 +107,38 @@ export const useDFMEAStore = create(
             name: 'New Part',
             category: 'Other',
             description: '',
+            ...overrides,
           },
         }
-        set({ nodes: [...get().nodes, newNode] })
+        get()._updateActiveGraph((g) => ({ nodes: [...g.nodes, newNode] }))
         return id
       },
       updatePart: (id, data) => {
-        set({
-          nodes: get().nodes.map((n) =>
-            n.id === id ? { ...n, data: { ...n.data, ...data } } : n
-          ),
-        })
+        get()._updateActiveGraph((g) => ({
+          nodes: g.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...data } } : n)),
+        }))
       },
       deletePart: (id) => {
-        set({
-          nodes: get().nodes.filter((n) => n.id !== id),
-          edges: get().edges.filter((e) => e.source !== id && e.target !== id),
-          selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
-        })
+        get()._updateActiveGraph((g) => ({
+          nodes: g.nodes.filter((n) => n.id !== id),
+          edges: g.edges.filter((e) => e.source !== id && e.target !== id),
+        }))
+        set({ selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId })
       },
 
       // --- Interfaces (edges) CRUD ---
       updateInterface: (id, data) => {
-        set({
-          edges: get().edges.map((e) =>
+        get()._updateActiveGraph((g) => ({
+          edges: g.edges.map((e) =>
             e.id === id
-              ? {
-                  ...e,
-                  label: data.interfaceType ?? e.data?.interfaceType,
-                  data: { ...e.data, ...data },
-                }
+              ? { ...e, label: data.interfaceType ?? e.data?.interfaceType, data: { ...e.data, ...data } }
               : e
           ),
-        })
+        }))
       },
       deleteInterface: (id) => {
-        set({
-          edges: get().edges.filter((e) => e.id !== id),
-          selectedEdgeId: get().selectedEdgeId === id ? null : get().selectedEdgeId,
-        })
+        get()._updateActiveGraph((g) => ({ edges: g.edges.filter((e) => e.id !== id) }))
+        set({ selectedEdgeId: get().selectedEdgeId === id ? null : get().selectedEdgeId })
       },
 
       // --- Selection / modal state ---
@@ -136,18 +148,27 @@ export const useDFMEAStore = create(
 
       // --- Import / Export ---
       exportGraph: () => {
-        const { nodes, edges } = get()
-        return { nodes, edges, exportedAt: new Date().toISOString() }
+        const { activeModuleId, modules } = get()
+        const moduleName = modules.find((m) => m.id === activeModuleId)?.name ?? activeModuleId
+        const { nodes, edges } = get()._activeGraph()
+        return { module: moduleName, nodes, edges, exportedAt: new Date().toISOString() }
       },
       importGraph: ({ nodes, edges }) => {
-        set({ nodes: nodes ?? [], edges: edges ?? [] })
+        get()._updateActiveGraph(() => ({ nodes: nodes ?? [], edges: edges ?? [] }))
       },
-      clearGraph: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedEdgeId: null }),
+      clearGraph: () => {
+        get()._updateActiveGraph(() => emptyGraph())
+        set({ selectedNodeId: null, selectedEdgeId: null })
+      },
     }),
     {
       name: 'super-dfmea-graph',
       storage: createJSONStorage(() => indexedDBStorage),
-      partialize: (state) => ({ nodes: state.nodes, edges: state.edges }),
+      partialize: (state) => ({
+        modules: state.modules,
+        graphsByModule: state.graphsByModule,
+        activeModuleId: state.activeModuleId,
+      }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },

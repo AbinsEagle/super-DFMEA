@@ -10,8 +10,8 @@ import { useDFMEAStore } from '../store/dfmeaStore'
 import PartNode from './PartNode'
 
 export default function GraphCanvas() {
-  const nodes = useDFMEAStore((s) => s.nodes)
-  const edges = useDFMEAStore((s) => s.edges)
+  const nodes = useDFMEAStore((s) => s.graphsByModule[s.activeModuleId]?.nodes ?? [])
+  const edges = useDFMEAStore((s) => s.graphsByModule[s.activeModuleId]?.edges ?? [])
   const onNodesChange = useDFMEAStore((s) => s.onNodesChange)
   const onEdgesChange = useDFMEAStore((s) => s.onEdgesChange)
   const onConnect = useDFMEAStore((s) => s.onConnect)
