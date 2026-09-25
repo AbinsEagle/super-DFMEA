@@ -11,6 +11,7 @@ export const DEFAULT_MODULES = [
   { id: 'fans', name: 'Fans' },
   { id: 'wires-cables', name: 'Wires & Cables' },
   { id: 'switchgears', name: 'Switchgears' },
+  { id: 'induction-cooktops', name: 'Induction Cooktops' },
 ]
 
 export const GENERIC_PART_CATEGORIES = [
@@ -109,6 +110,21 @@ export const MODULE_PART_CATEGORIES = {
     'Enclosure',
     'Other',
   ],
+  'induction-cooktops': [
+    'Rectifier',
+    'EMI Filter',
+    'Protection',
+    'Relay',
+    'Coil',
+    'IGBT',
+    'Power Supply',
+    'Controller',
+    'Sensor',
+    'UI/Display',
+    'Wiring',
+    'Enclosure',
+    'Other',
+  ],
 }
 
 export const MODULE_PRESET_PARTS = {
@@ -182,6 +198,33 @@ export const MODULE_PRESET_PARTS = {
     { name: 'Indicator Light', category: 'Indicator', description: 'Shows circuit status.' },
     { name: 'Busbar', category: 'Wiring', description: 'Distributes current within the panel.' },
     { name: 'Enclosure / DB Box', category: 'Enclosure', description: 'Houses switchgear components.' },
+  ],
+  // Derived from a real ICT 1.6kW power-board schematic (AC Power & EMI,
+  // IH Circuit, IGBT Driver, Auxiliary SMPS, MCU & Peripheral, Sync
+  // Detect, IGBT/Pot Temp, Buzzer & Fan, UI Interface blocks).
+  'induction-cooktops': [
+    { name: 'Bridge Rectifier', category: 'Rectifier', description: 'Converts AC mains input into pulsating DC for the power stage.' },
+    { name: 'EMI Filter Inductor', category: 'EMI Filter', description: 'Suppresses conducted EMI on the AC input line.' },
+    { name: 'MOV / Varistor', category: 'Protection', description: 'Clamps voltage transients and surges on the AC line.' },
+    { name: 'AC Input Fuse', category: 'Protection', description: 'Breaks the circuit under overcurrent fault conditions.' },
+    { name: 'AC Relay', category: 'Relay', description: 'Switches AC power to the induction (IH) circuit under MCU control.' },
+    { name: 'Induction Coil', category: 'Coil', description: 'Generates the alternating magnetic field that heats the cookware.' },
+    { name: 'Resonant Capacitor', category: 'Coil', description: 'Forms the LC resonant tank together with the induction coil.' },
+    { name: 'IGBT', category: 'IGBT', description: 'High-speed switch that drives resonant current through the induction coil.' },
+    { name: 'IGBT Gate Driver', category: 'IGBT', description: 'Transistor driver stage that switches the IGBT gate on and off.' },
+    { name: 'Auxiliary SMPS (VIPER + Transformer)', category: 'Power Supply', description: 'Generates regulated +18V/+5V rails from AC mains for control circuitry.' },
+    { name: '5V Linear Regulator', category: 'Power Supply', description: 'Regulates the +5V rail that powers the MCU and logic ICs.' },
+    { name: 'MCU (Control PCB)', category: 'Controller', description: 'Runs the control algorithm: PWM generation, protection logic, and UI communication.' },
+    { name: 'Current Sensor (Shunt)', category: 'Sensor', description: 'Measures input current for power control and overcurrent protection.' },
+    { name: 'Sync Detect Circuit', category: 'Sensor', description: 'Detects resonant zero-crossing timing so the MCU switches the IGBT correctly.' },
+    { name: 'AC Voltage / Surge Detect', category: 'Sensor', description: 'Monitors AC line voltage and flags surge or under/over-voltage conditions.' },
+    { name: 'IGBT Temperature Sensor (NTC)', category: 'Sensor', description: 'Monitors IGBT heatsink temperature to prevent thermal runaway.' },
+    { name: 'Cookware Temperature Sensor (NTC)', category: 'Sensor', description: 'Detects cookware presence and pan-bottom temperature.' },
+    { name: 'Buzzer', category: 'UI/Display', description: 'Gives audible feedback for key presses and fault alerts.' },
+    { name: 'Control Panel / UI Board', category: 'UI/Display', description: 'Touch or button panel connected to the power board for user input and display.' },
+    { name: 'Cooling Fan', category: 'Other', description: 'Cools the IGBT heatsink and power electronics.' },
+    { name: 'Power Cord & AC Input', category: 'Wiring', description: 'Supplies mains power to the unit.' },
+    { name: 'Enclosure / Base', category: 'Enclosure', description: 'Houses and protects the power board and glass-top assembly.' },
   ],
 }
 
