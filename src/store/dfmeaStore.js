@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval'
 import { applyNodeChanges, applyEdgeChanges, addEdge } from 'reactflow'
-import { DEFAULT_MODULES } from '../data/modulePresets'
+import { DEFAULT_MODULES, getModulePresetDiagram } from '../data/modulePresets'
 
 // Adapts idb-keyval's get/set/del to the { getItem, setItem, removeItem }
 // shape zustand's persist middleware expects, so state survives refresh
@@ -53,6 +53,48 @@ export const useDFMEAStore = create(
           graphsByModule: { ...get().graphsByModule, [id]: emptyGraph() },
         })
         return id
+      },
+
+      // --- Start-choice ("blank" vs "established network"), shown once per
+      // module the first time its graph is empty. ---
+      dismissedStartChoiceModuleIds: [],
+      markStartChoiceDismissed: (moduleId) => {
+        const current = get().dismissedStartChoiceModuleIds
+        if (current.includes(moduleId)) return
+        set({ dismissedStartChoiceModuleIds: [...current, moduleId] })
+      },
+      loadPresetDiagram: () => {
+        const { activeModuleId } = get()
+        const diagram = getModulePresetDiagram(activeModuleId)
+        if (!diagram) return
+        const nameToId = {}
+        const nodes = diagram.parts.map((p) => {
+          const id = genId('part')
+          nameToId[p.name] = id
+          return {
+            id,
+            type: 'partNode',
+            position: { x: p.x, y: p.y },
+            data: { name: p.name, category: p.category, description: p.description },
+          }
+        })
+        const edges = diagram.interfaces
+          .map((i) => {
+            const source = nameToId[i.source]
+            const target = nameToId[i.target]
+            if (!source || !target) return null
+            return {
+              id: genId('interface'),
+              source,
+              target,
+              type: 'default',
+              label: i.interfaceType,
+              data: { interfaceType: i.interfaceType, description: i.description ?? '' },
+            }
+          })
+          .filter(Boolean)
+        get()._updateActiveGraph(() => ({ nodes, edges }))
+        get().markStartChoiceDismissed(activeModuleId)
       },
 
       // --- Internal helper: scoped read/write of the active module's graph ---
@@ -205,6 +247,7 @@ export const useDFMEAStore = create(
         modules: state.modules,
         graphsByModule: state.graphsByModule,
         activeModuleId: state.activeModuleId,
+        dismissedStartChoiceModuleIds: state.dismissedStartChoiceModuleIds,
       }),
       // Default merge is a shallow `{...current, ...persisted}`, which would
       // let a browser's old cached `modules` list (saved before a new
