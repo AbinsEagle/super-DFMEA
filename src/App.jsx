@@ -6,6 +6,7 @@ import Toolbar from './components/Toolbar'
 import PartPropertyModal from './components/PartPropertyModal'
 import InterfacePropertyModal from './components/InterfacePropertyModal'
 import PresetPartDirectory from './components/PresetPartDirectory'
+import StartChoiceModal from './components/StartChoiceModal'
 
 export default function App() {
   const hasHydrated = useDFMEAStore((s) => s.hasHydrated)
@@ -57,6 +58,7 @@ export default function App() {
         <PartPropertyModal />
         <InterfacePropertyModal />
         <PresetPartDirectory />
+        <StartChoiceModal />
       </ReactFlowProvider>
     </div>
   )

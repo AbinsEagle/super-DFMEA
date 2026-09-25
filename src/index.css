@@ -532,3 +532,59 @@ body {
 .btn-danger:hover {
   background: #fef3f2;
 }
+
+/* --- Start Choice Modal --- */
+.start-choice-card {
+  width: 560px;
+}
+
+.start-choice-subtitle {
+  margin: -8px 0 20px;
+  font-size: 13px;
+  color: #667085;
+}
+
+.start-choice-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.start-choice-option {
+  text-align: left;
+  background: #f9fafb;
+  border: 1px solid #e2e6ea;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+}
+
+.start-choice-option:hover {
+  border-color: #0f3d63;
+  background: #eef4fa;
+  transform: translateY(-2px);
+}
+
+.start-choice-option-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f3d63;
+  margin-bottom: 6px;
+}
+
+.start-choice-option-meta {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #667085;
+  margin-bottom: 8px;
+}
+
+.start-choice-option-desc {
+  font-size: 12px;
+  color: #475467;
+  line-height: 1.4;
+}
