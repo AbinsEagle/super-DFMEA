@@ -206,6 +206,33 @@ export const useDFMEAStore = create(
         graphsByModule: state.graphsByModule,
         activeModuleId: state.activeModuleId,
       }),
+      // Default merge is a shallow `{...current, ...persisted}`, which would
+      // let a browser's old cached `modules` list (saved before a new
+      // built-in module existed in code) permanently hide that new module.
+      // Union by id instead, so newly added DEFAULT_MODULES always show up
+      // for returning users while their custom modules and graphs are kept.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState ?? {}
+        const persistedModules = persisted.modules ?? []
+        const mergedModules = [...persistedModules]
+        for (const defaultModule of DEFAULT_MODULES) {
+          if (!mergedModules.some((m) => m.id === defaultModule.id)) {
+            mergedModules.push(defaultModule)
+          }
+        }
+        const mergedGraphsByModule = { ...(persisted.graphsByModule ?? {}) }
+        for (const m of mergedModules) {
+          if (!mergedGraphsByModule[m.id]) {
+            mergedGraphsByModule[m.id] = emptyGraph()
+          }
+        }
+        return {
+          ...currentState,
+          ...persisted,
+          modules: mergedModules,
+          graphsByModule: mergedGraphsByModule,
+        }
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },
